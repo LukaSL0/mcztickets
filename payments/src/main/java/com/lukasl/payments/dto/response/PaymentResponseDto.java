@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PaymentDto {
+public class PaymentResponseDto {
     private Long id;
     private Long orderId;
     private UUID userId;

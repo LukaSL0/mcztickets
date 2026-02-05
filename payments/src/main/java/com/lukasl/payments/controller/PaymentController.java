@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.lukasl.payments.dto.CreatePaymentDto;
-import com.lukasl.payments.dto.response.PaymentDto;
+import com.lukasl.payments.dto.response.PaymentResponseDto;
 import com.lukasl.payments.service.PaymentService;
 
 import jakarta.validation.Valid;
@@ -26,27 +26,27 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @GetMapping()
-    public ResponseEntity<List<PaymentDto>> getAllPayments() {
-        List<PaymentDto> allPayments = paymentService.getAllPayments();
+    public ResponseEntity<List<PaymentResponseDto>> getAllPayments() {
+        List<PaymentResponseDto> allPayments = paymentService.getAllPayments();
         return ResponseEntity.ok(allPayments);
     }
 
     @GetMapping("/{paymentId}")
-    public ResponseEntity<PaymentDto> getPayment(@PathVariable Long paymentId) {
-        PaymentDto payment = paymentService.getPayment(paymentId);
+    public ResponseEntity<PaymentResponseDto> getPayment(@PathVariable Long paymentId) {
+        PaymentResponseDto payment = paymentService.getPayment(paymentId);
         return ResponseEntity.ok(payment);
     }
 
     @PostMapping()
-    public ResponseEntity<PaymentDto> createPayment(@Valid @RequestBody CreatePaymentDto dto) {
-        PaymentDto createdPayment = paymentService.createPayment(dto);
+    public ResponseEntity<PaymentResponseDto> createPayment(@Valid @RequestBody CreatePaymentDto dto) {
+        PaymentResponseDto createdPayment = paymentService.createPayment(dto);
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(createdPayment);
     }
 
     @PostMapping("/{paymentId}")
-    public ResponseEntity<PaymentDto> processPayment(@PathVariable Long paymentId) {
-        PaymentDto processedPayment = paymentService.processPayment(paymentId);
+    public ResponseEntity<PaymentResponseDto> processPayment(@PathVariable Long paymentId) {
+        PaymentResponseDto processedPayment = paymentService.processPayment(paymentId);
         return ResponseEntity.ok(processedPayment);
     }
 }

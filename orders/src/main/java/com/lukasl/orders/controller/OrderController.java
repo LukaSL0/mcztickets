@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.lukasl.orders.dto.CreateOrderDto;
 import com.lukasl.orders.dto.UpdateOrderStatusDto;
-import com.lukasl.orders.dto.response.OrderDto;
+import com.lukasl.orders.dto.response.OrderResponseDto;
 import com.lukasl.orders.service.OrderService;
 
 import jakarta.validation.Valid;
@@ -28,30 +28,30 @@ public class OrderController {
     private final OrderService orderService;
 
     @GetMapping()
-    public ResponseEntity<List<OrderDto>> getAllOrders() {
-        List<OrderDto> allOders = orderService.getAllOrders();
+    public ResponseEntity<List<OrderResponseDto>> getAllOrders() {
+        List<OrderResponseDto> allOders = orderService.getAllOrders();
         return ResponseEntity.ok(allOders);
     }
 
     @GetMapping("/{orderId}")
-    public ResponseEntity<OrderDto> getOrderById(@PathVariable Long orderId) {
-        OrderDto order = orderService.getOrderById(orderId);
+    public ResponseEntity<OrderResponseDto> getOrderById(@PathVariable Long orderId) {
+        OrderResponseDto order = orderService.getOrderById(orderId);
         return ResponseEntity.ok(order);
     }
 
     @PostMapping()
-    public ResponseEntity<OrderDto> createOrder(@Valid @RequestBody CreateOrderDto dto) {
-        OrderDto orderResponse = orderService.createOrder(dto);
+    public ResponseEntity<OrderResponseDto> createOrder(@Valid @RequestBody CreateOrderDto dto) {
+        OrderResponseDto orderResponse = orderService.createOrder(dto);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(orderResponse);
     }   
 
     @PatchMapping("/{orderId}/status")
-    public ResponseEntity<OrderDto> updateOrderStatus(
+    public ResponseEntity<OrderResponseDto> updateOrderStatus(
         @PathVariable Long orderId,
         @Valid @RequestBody UpdateOrderStatusDto dto
     ) {
-        OrderDto updatedOrder = orderService.updateOrderStatus(orderId, dto);
+        OrderResponseDto updatedOrder = orderService.updateOrderStatus(orderId, dto);
         return ResponseEntity.ok(updatedOrder);
     }
 }

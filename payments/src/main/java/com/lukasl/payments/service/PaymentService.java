@@ -8,7 +8,7 @@ import com.lukasl.payments.client.OrderClient;
 import com.lukasl.payments.dto.CreatePaymentDto;
 import com.lukasl.payments.dto.external.OrderDto;
 import com.lukasl.payments.dto.external.UpdateOrderStatusDto;
-import com.lukasl.payments.dto.response.PaymentDto;
+import com.lukasl.payments.dto.response.PaymentResponseDto;
 import com.lukasl.payments.entity.Payment;
 import com.lukasl.payments.enums.PaymentStatus;
 import com.lukasl.payments.exception.ConflictException;
@@ -25,19 +25,19 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderClient orderClient;
 
-    public List<PaymentDto> getAllPayments() {
+    public List<PaymentResponseDto> getAllPayments() {
         List<Payment> payments = paymentRepository.findAll();
         return toListResponseDto(payments);
     }
 
-    public PaymentDto getPayment(Long id) {
+    public PaymentResponseDto getPayment(Long id) {
         Payment payment = paymentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment not found"));
         return toResponseDto(payment);
     }
 
     @Transactional
-    public PaymentDto createPayment(CreatePaymentDto dto) {
+    public PaymentResponseDto createPayment(CreatePaymentDto dto) {
         if (paymentRepository.existsByOrderId(dto.getOrderId())) {
             throw new ConflictException("Payment already exists for order: " + dto.getOrderId());
         }
@@ -59,7 +59,7 @@ public class PaymentService {
     }
 
     @Transactional
-    public PaymentDto processPayment(Long id) {
+    public PaymentResponseDto processPayment(Long id) {
         Payment payment = paymentRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Payment not found"));
         
@@ -117,14 +117,14 @@ public class PaymentService {
         orderClient.updateOrderStatus(orderId, dto);
     }
     
-    private List<PaymentDto> toListResponseDto(List<Payment> payments) {
+    private List<PaymentResponseDto> toListResponseDto(List<Payment> payments) {
         return payments.stream()
         .map(this::toResponseDto)
         .toList();
     }
 
-    private PaymentDto toResponseDto(Payment payment) {
-        return PaymentDto.builder()
+    private PaymentResponseDto toResponseDto(Payment payment) {
+        return PaymentResponseDto.builder()
             .id(payment.getId())
             .orderId(payment.getOrderId())
             .userId(payment.getUserId())

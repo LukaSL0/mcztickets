@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.lukasl.events.dto.CreateEventDto;
-import com.lukasl.events.dto.response.EventDto;
+import com.lukasl.events.dto.response.EventResponseDto;
 import com.lukasl.events.entity.Event;
 import com.lukasl.events.exception.ConflictException;
 import com.lukasl.events.exception.ResourceNotFoundException;
@@ -20,11 +20,11 @@ public class EventService {
 
     private final EventRepository eventRepository;
 
-    public List<EventDto> getAllEvents() {
+    public List<EventResponseDto> getAllEvents() {
         return toListResponseDto(eventRepository.findAll());
     }
 
-    public EventDto getEventById(Long eventId) {
+    public EventResponseDto getEventById(Long eventId) {
         Event event = eventRepository.findById(eventId)
         .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
         
@@ -32,7 +32,7 @@ public class EventService {
     }
 
     @Transactional
-    public EventDto createEvent(CreateEventDto dto) {
+    public EventResponseDto createEvent(CreateEventDto dto) {
         Event event = Event.builder()
                 .name(dto.getName())
                 .description(dto.getDescription())
@@ -49,7 +49,7 @@ public class EventService {
     }
 
     @Transactional
-    public EventDto reserveTickets(Long eventId, int tickets) {
+    public EventResponseDto reserveTickets(Long eventId, int tickets) {
         int updatedRows = eventRepository.reserveTickets(eventId, tickets);
 
         if (updatedRows == 0) {
@@ -68,14 +68,14 @@ public class EventService {
 
     // ========== HELPERS ==========
 
-    private List<EventDto> toListResponseDto(List<Event> events) {
+    private List<EventResponseDto> toListResponseDto(List<Event> events) {
         return events.stream()
         .map(this::toResponseDto)
         .toList();
     }
 
-    private EventDto toResponseDto(Event event) {
-        return EventDto.builder()
+    private EventResponseDto toResponseDto(Event event) {
+        return EventResponseDto.builder()
             .id(event.getId())
             .name(event.getName())
             .description(event.getDescription())

@@ -11,7 +11,7 @@ import com.lukasl.orders.dto.CreateOrderDto;
 import com.lukasl.orders.dto.UpdateOrderStatusDto;
 import com.lukasl.orders.dto.external.EventDto;
 import com.lukasl.orders.dto.external.UpdateEventDto;
-import com.lukasl.orders.dto.response.OrderDto;
+import com.lukasl.orders.dto.response.OrderResponseDto;
 import com.lukasl.orders.entity.Order;
 import com.lukasl.orders.enums.OrderStatus;
 import com.lukasl.orders.exception.ResourceNotFoundException;
@@ -26,15 +26,15 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final EventClient eventClient;
 
-    public List<OrderDto> getAllOrders() {
+    public List<OrderResponseDto> getAllOrders() {
         return toListResponseDto(orderRepository.findAll());
     }
 
-    public OrderDto getOrderById(Long orderId) {
+    public OrderResponseDto getOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId)
             .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
 
-        return OrderDto.builder()
+        return OrderResponseDto.builder()
             .id(order.getId())
             .eventId(order.getEventId())
             .status(order.getStatus())
@@ -43,7 +43,7 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderDto createOrder(CreateOrderDto dto) {
+    public OrderResponseDto createOrder(CreateOrderDto dto) {
         EventDto eventDto = eventClient.getEventById(dto.getEventId());
 
         BigDecimal totalPrice = eventDto.getBasePrice().multiply(BigDecimal.valueOf(dto.getTickets()));
@@ -61,7 +61,7 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderDto updateOrderStatus(
+    public OrderResponseDto updateOrderStatus(
         Long orderId,
         UpdateOrderStatusDto dto
     ) {
@@ -88,14 +88,14 @@ public class OrderService {
 
     // ========== HELPERS ==========
 
-    private List<OrderDto> toListResponseDto(List<Order> orders) {
+    private List<OrderResponseDto> toListResponseDto(List<Order> orders) {
         return orders.stream()
         .map(this::toResponseDto)
         .toList();
     }
 
-    private OrderDto toResponseDto(Order order) {
-        return OrderDto.builder()
+    private OrderResponseDto toResponseDto(Order order) {
+        return OrderResponseDto.builder()
             .id(order.getId())
             .eventId(order.getEventId())
             .status(order.getStatus())

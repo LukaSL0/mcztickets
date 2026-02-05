@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.lukasl.events.dto.CreateEventDto;
 import com.lukasl.events.dto.UpdateEventDto;
-import com.lukasl.events.dto.response.EventDto;
+import com.lukasl.events.dto.response.EventResponseDto;
 import com.lukasl.events.service.EventService;
 
 import jakarta.validation.Valid;
@@ -27,30 +27,30 @@ public class EventsController {
     private final EventService eventService;
     
     @GetMapping()
-    public ResponseEntity<List<EventDto>> getAllEvents() {
-        List<EventDto> allEvents = eventService.getAllEvents();
+    public ResponseEntity<List<EventResponseDto>> getAllEvents() {
+        List<EventResponseDto> allEvents = eventService.getAllEvents();
         return ResponseEntity.ok(allEvents);
     }
 
     @GetMapping("/{eventId}")
-    public ResponseEntity<EventDto> getEventById(@PathVariable Long eventId) {
-        EventDto event = eventService.getEventById(eventId);
+    public ResponseEntity<EventResponseDto> getEventById(@PathVariable Long eventId) {
+        EventResponseDto event = eventService.getEventById(eventId);
         return ResponseEntity.ok(event);
     }
 
     @PostMapping()
-    public ResponseEntity<EventDto> createEvent(@Valid @RequestBody CreateEventDto dto) {
-        EventDto createdEvent = eventService.createEvent(dto);
+    public ResponseEntity<EventResponseDto> createEvent(@Valid @RequestBody CreateEventDto dto) {
+        EventResponseDto createdEvent = eventService.createEvent(dto);
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(createdEvent);
     }
 
     @PostMapping("/{eventId}/reserve")
-    public ResponseEntity<EventDto> reserveTickets(
+    public ResponseEntity<EventResponseDto> reserveTickets(
         @PathVariable Long eventId,
         @Valid @RequestBody UpdateEventDto dto
     ) {
-        EventDto updatedEvent = eventService.reserveTickets(eventId, dto.getTickets());
+        EventResponseDto updatedEvent = eventService.reserveTickets(eventId, dto.getTickets());
         return ResponseEntity.ok(updatedEvent);
     }
 }
