@@ -3,6 +3,7 @@ package com.lukasl.auth.controller;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -28,13 +29,13 @@ public class UserController {
     @GetMapping()
     public ResponseEntity<List<UserResponseDto>> getAllUsers() {
         List<UserResponseDto> allUsers = userService.getAllUsers();
-        return ResponseEntity.ok(allUsers);
+        return ResponseEntity.status(HttpStatus.OK).body(allUsers);
     }
 
     @GetMapping("/{userId}")
     public ResponseEntity<UserResponseDto> getUserById(@PathVariable UUID userId) {
         UserResponseDto user = userService.getUserById(userId);
-        return ResponseEntity.ok(user);
+        return ResponseEntity.status(HttpStatus.OK).body(user);
     }
 
     @PatchMapping("/{userId}/role")
@@ -43,6 +44,6 @@ public class UserController {
         @Valid @RequestBody UpdateUserRoleDto dto
     ) {
         UserResponseDto updatedUser = userService.updateUserRole(userId, dto);
-        return ResponseEntity.ok(updatedUser);
+        return ResponseEntity.status(HttpStatus.OK).body(updatedUser);
     }
 }

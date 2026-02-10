@@ -29,13 +29,13 @@ public class EventsController {
     @GetMapping()
     public ResponseEntity<List<EventResponseDto>> getAllEvents() {
         List<EventResponseDto> allEvents = eventService.getAllEvents();
-        return ResponseEntity.ok(allEvents);
+        return ResponseEntity.status(HttpStatus.OK).body(allEvents);
     }
 
     @GetMapping("/{eventId}")
     public ResponseEntity<EventResponseDto> getEventById(@PathVariable Long eventId) {
         EventResponseDto event = eventService.getEventById(eventId);
-        return ResponseEntity.ok(event);
+        return ResponseEntity.status(HttpStatus.OK).body(event);
     }
 
     @PostMapping()
@@ -51,6 +51,6 @@ public class EventsController {
         @Valid @RequestBody UpdateEventDto dto
     ) {
         EventResponseDto updatedEvent = eventService.reserveTickets(eventId, dto.getTickets());
-        return ResponseEntity.ok(updatedEvent);
+        return ResponseEntity.status(HttpStatus.OK).body(updatedEvent);
     }
 }

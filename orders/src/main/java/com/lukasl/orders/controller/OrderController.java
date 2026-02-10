@@ -30,13 +30,13 @@ public class OrderController {
     @GetMapping()
     public ResponseEntity<List<OrderResponseDto>> getAllOrders() {
         List<OrderResponseDto> allOders = orderService.getAllOrders();
-        return ResponseEntity.ok(allOders);
+        return ResponseEntity.status(HttpStatus.OK).body(allOders);
     }
 
     @GetMapping("/{orderId}")
     public ResponseEntity<OrderResponseDto> getOrderById(@PathVariable Long orderId) {
         OrderResponseDto order = orderService.getOrderById(orderId);
-        return ResponseEntity.ok(order);
+        return ResponseEntity.status(HttpStatus.OK).body(order);
     }
 
     @PostMapping()
@@ -52,6 +52,6 @@ public class OrderController {
         @Valid @RequestBody UpdateOrderStatusDto dto
     ) {
         OrderResponseDto updatedOrder = orderService.updateOrderStatus(orderId, dto);
-        return ResponseEntity.ok(updatedOrder);
+        return ResponseEntity.status(HttpStatus.OK).body(updatedOrder);
     }
 }

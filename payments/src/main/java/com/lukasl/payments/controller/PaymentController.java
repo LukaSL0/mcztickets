@@ -28,13 +28,13 @@ public class PaymentController {
     @GetMapping()
     public ResponseEntity<List<PaymentResponseDto>> getAllPayments() {
         List<PaymentResponseDto> allPayments = paymentService.getAllPayments();
-        return ResponseEntity.ok(allPayments);
+        return ResponseEntity.status(HttpStatus.OK).body(allPayments);
     }
 
     @GetMapping("/{paymentId}")
     public ResponseEntity<PaymentResponseDto> getPayment(@PathVariable Long paymentId) {
         PaymentResponseDto payment = paymentService.getPayment(paymentId);
-        return ResponseEntity.ok(payment);
+        return ResponseEntity.status(HttpStatus.OK).body(payment);
     }
 
     @PostMapping()
@@ -47,6 +47,6 @@ public class PaymentController {
     @PostMapping("/{paymentId}")
     public ResponseEntity<PaymentResponseDto> processPayment(@PathVariable Long paymentId) {
         PaymentResponseDto processedPayment = paymentService.processPayment(paymentId);
-        return ResponseEntity.ok(processedPayment);
+        return ResponseEntity.status(HttpStatus.OK).body(processedPayment);
     }
 }
