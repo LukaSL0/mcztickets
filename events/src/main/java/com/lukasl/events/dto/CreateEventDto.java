@@ -5,35 +5,25 @@ import java.time.LocalDateTime;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class CreateEventDto {
-
+public record CreateEventDto(
     @NotBlank(message = "Name is required")
-    private String name;
+    String name,
 
-    @NotBlank(message = "Name is required")
-    private String description;
+    @NotBlank(message = "Description is required")
+    String description,
     
     @NotNull(message = "Event date is required")
-    private LocalDateTime eventDate;
+    LocalDateTime eventDate,
     
     @NotBlank(message = "Location is required")
-    private String location;
+    String location,
 
     @NotNull(message = "Total tickets is required")
-    private Integer totalTickets;
+    Integer totalTickets,
     
-    private Integer availableTickets;
+    Integer availableTickets,
 
-    @NotNull(message = "Event date is required")
-    private BigDecimal basePrice;
-    
-}
+    @NotNull(message = "Base price is required")
+    BigDecimal basePrice
+) {}

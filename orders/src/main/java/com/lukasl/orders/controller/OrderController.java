@@ -30,20 +30,19 @@ public class OrderController {
     @GetMapping()
     public ResponseEntity<List<OrderResponseDto>> getAllOrders() {
         List<OrderResponseDto> allOders = orderService.getAllOrders();
-        return ResponseEntity.status(HttpStatus.OK).body(allOders);
+        return ResponseEntity.ok(allOders);
     }
 
     @GetMapping("/{orderId}")
     public ResponseEntity<OrderResponseDto> getOrderById(@PathVariable Long orderId) {
         OrderResponseDto order = orderService.getOrderById(orderId);
-        return ResponseEntity.status(HttpStatus.OK).body(order);
+        return ResponseEntity.ok(order);
     }
 
     @PostMapping()
     public ResponseEntity<OrderResponseDto> createOrder(@Valid @RequestBody CreateOrderDto dto) {
         OrderResponseDto orderResponse = orderService.createOrder(dto);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(orderResponse);
+        return ResponseEntity.status(HttpStatus.CREATED).body(orderResponse);
     }   
 
     @PatchMapping("/{orderId}/status")
@@ -52,6 +51,6 @@ public class OrderController {
         @Valid @RequestBody UpdateOrderStatusDto dto
     ) {
         OrderResponseDto updatedOrder = orderService.updateOrderStatus(orderId, dto);
-        return ResponseEntity.status(HttpStatus.OK).body(updatedOrder);
+        return ResponseEntity.ok(updatedOrder);
     }
 }

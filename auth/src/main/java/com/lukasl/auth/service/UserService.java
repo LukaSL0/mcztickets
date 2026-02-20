@@ -22,14 +22,16 @@ public class UserService {
     private final UserRepository userRepository;
 
     public List<UserResponseDto> getAllUsers() {
-        return toListResponseDto(userRepository.findAll());
+        return userRepository.findAll().stream()
+                .map(UserResponseDto::from)
+                .toList();
     }
 
     public UserResponseDto getUserById(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        return toResponseDto(user);
+        return UserResponseDto.from(user);
     }
 
     @Transactional
@@ -38,27 +40,9 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        user.setRole(dto.getRole());
+        user.setRole(dto.role());
         User savedUser = userRepository.save(user);
 
-        return toResponseDto(savedUser);
-    }
-
-    // ========== HELPERS ==========
-
-    private List<UserResponseDto> toListResponseDto(List<User> users) {
-        return users.stream()
-                .map(this::toResponseDto)
-                .toList();
-    }
-
-    private UserResponseDto toResponseDto(User user) {
-        return UserResponseDto.builder()
-                .id(user.getId())
-                .name(user.getName())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .role(user.getRole())
-                .build();
+        return UserResponseDto.from(savedUser);
     }
 }

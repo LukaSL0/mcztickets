@@ -3,8 +3,8 @@ package com.lukasl.auth.controller;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,24 +26,26 @@ public class UserController {
 
     private final UserService userService;
 
-    @GetMapping()
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserResponseDto>> getAllUsers() {
         List<UserResponseDto> allUsers = userService.getAllUsers();
-        return ResponseEntity.status(HttpStatus.OK).body(allUsers);
+        return ResponseEntity.ok(allUsers);
     }
 
     @GetMapping("/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponseDto> getUserById(@PathVariable UUID userId) {
         UserResponseDto user = userService.getUserById(userId);
-        return ResponseEntity.status(HttpStatus.OK).body(user);
+        return ResponseEntity.ok(user);
     }
 
     @PatchMapping("/{userId}/role")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponseDto> updateUserRole(
-        @PathVariable UUID userId,
-        @Valid @RequestBody UpdateUserRoleDto dto
-    ) {
+            @PathVariable UUID userId,
+            @Valid @RequestBody UpdateUserRoleDto dto) {
         UserResponseDto updatedUser = userService.updateUserRole(userId, dto);
-        return ResponseEntity.status(HttpStatus.OK).body(updatedUser);
+        return ResponseEntity.ok(updatedUser);
     }
 }

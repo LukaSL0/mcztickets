@@ -27,37 +27,34 @@ public class OrderService {
     private final EventClient eventClient;
 
     public List<OrderResponseDto> getAllOrders() {
-        return toListResponseDto(orderRepository.findAll());
+        return orderRepository.findAll().stream()
+                .map(OrderResponseDto::from)
+                .toList();
     }
 
     public OrderResponseDto getOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId)
             .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
 
-        return OrderResponseDto.builder()
-            .id(order.getId())
-            .eventId(order.getEventId())
-            .status(order.getStatus())
-            .amount(order.getAmount())
-            .build();
+        return OrderResponseDto.from(order);
     }
 
     @Transactional
     public OrderResponseDto createOrder(CreateOrderDto dto) {
-        EventDto eventDto = eventClient.getEventById(dto.getEventId());
+        EventDto eventDto = eventClient.getEventById(dto.eventId());
 
-        BigDecimal totalPrice = eventDto.getBasePrice().multiply(BigDecimal.valueOf(dto.getTickets()));
+        BigDecimal totalPrice = eventDto.basePrice().multiply(BigDecimal.valueOf(dto.tickets()));
 
         Order order = Order.builder()
-            .userId(dto.getUserId())
-            .eventId(dto.getEventId())
-            .tickets(dto.getTickets())
+            .userId(dto.userId())
+            .eventId(dto.eventId())
+            .tickets(dto.tickets())
             .amount(totalPrice)
             .build();
 
         Order savedOrder = orderRepository.save(order);
 
-        return toResponseDto(savedOrder);
+        return OrderResponseDto.from(savedOrder);
     }
 
     @Transactional
@@ -69,7 +66,7 @@ public class OrderService {
             .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
 
         OrderStatus oldStatus = order.getStatus();
-        OrderStatus newStatus = dto.getStatus();
+        OrderStatus newStatus = dto.status();
 
         order.setStatus(newStatus);
 
@@ -83,24 +80,6 @@ public class OrderService {
 
         Order updatedOrder = orderRepository.save(order);
         
-        return toResponseDto(updatedOrder);
+        return OrderResponseDto.from(updatedOrder);
     }
-
-    // ========== HELPERS ==========
-
-    private List<OrderResponseDto> toListResponseDto(List<Order> orders) {
-        return orders.stream()
-        .map(this::toResponseDto)
-        .toList();
-    }
-
-    private OrderResponseDto toResponseDto(Order order) {
-        return OrderResponseDto.builder()
-            .id(order.getId())
-            .eventId(order.getEventId())
-            .status(order.getStatus())
-            .amount(order.getAmount())
-            .build();
-    }
-
 }

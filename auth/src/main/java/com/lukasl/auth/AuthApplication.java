@@ -11,12 +11,12 @@ import org.springframework.context.annotation.Bean;
 @SpringBootApplication
 public class AuthApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(AuthApplication.class, args);
-		System.out.println("Application started on port 8081");
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(AuthApplication.class, args);
+        System.out.println("Application started on port 8081");
+    }
 
-	@Bean
+    @Bean
     public CommandLineRunner testConnection(DataSource dataSource) {
         return args -> {
             try (Connection conn = dataSource.getConnection()) {

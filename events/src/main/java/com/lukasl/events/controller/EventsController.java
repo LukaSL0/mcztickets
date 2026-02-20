@@ -29,20 +29,19 @@ public class EventsController {
     @GetMapping()
     public ResponseEntity<List<EventResponseDto>> getAllEvents() {
         List<EventResponseDto> allEvents = eventService.getAllEvents();
-        return ResponseEntity.status(HttpStatus.OK).body(allEvents);
+        return ResponseEntity.ok(allEvents);
     }
 
     @GetMapping("/{eventId}")
     public ResponseEntity<EventResponseDto> getEventById(@PathVariable Long eventId) {
         EventResponseDto event = eventService.getEventById(eventId);
-        return ResponseEntity.status(HttpStatus.OK).body(event);
+        return ResponseEntity.ok(event);
     }
 
     @PostMapping()
     public ResponseEntity<EventResponseDto> createEvent(@Valid @RequestBody CreateEventDto dto) {
         EventResponseDto createdEvent = eventService.createEvent(dto);
-        return ResponseEntity.status(HttpStatus.CREATED)
-            .body(createdEvent);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdEvent);
     }
 
     @PostMapping("/{eventId}/reserve")
@@ -50,7 +49,7 @@ public class EventsController {
         @PathVariable Long eventId,
         @Valid @RequestBody UpdateEventDto dto
     ) {
-        EventResponseDto updatedEvent = eventService.reserveTickets(eventId, dto.getTickets());
-        return ResponseEntity.status(HttpStatus.OK).body(updatedEvent);
+        EventResponseDto updatedEvent = eventService.reserveTickets(eventId, dto.tickets());
+        return ResponseEntity.ok(updatedEvent);
     }
 }

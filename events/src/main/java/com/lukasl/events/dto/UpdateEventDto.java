@@ -1,14 +1,8 @@
 package com.lukasl.events.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.NotNull;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class UpdateEventDto {
-    private int tickets;
-}
+public record UpdateEventDto(
+    @NotNull(message = "Tickets are required")
+    Integer tickets
+) {}

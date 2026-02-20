@@ -21,31 +21,33 @@ public class EventService {
     private final EventRepository eventRepository;
 
     public List<EventResponseDto> getAllEvents() {
-        return toListResponseDto(eventRepository.findAll());
+        return eventRepository.findAll().stream()
+                .map(EventResponseDto::from)
+                .toList();
     }
 
     public EventResponseDto getEventById(Long eventId) {
         Event event = eventRepository.findById(eventId)
         .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
         
-        return toResponseDto(event);
+        return EventResponseDto.from(event);
     }
 
     @Transactional
     public EventResponseDto createEvent(CreateEventDto dto) {
         Event event = Event.builder()
-                .name(dto.getName())
-                .description(dto.getDescription())
-                .eventDate(dto.getEventDate())
-                .location(dto.getLocation())
-                .totalTickets(dto.getTotalTickets())
-                .availableTickets(dto.getTotalTickets())
-                .basePrice(dto.getBasePrice())
+                .name(dto.name())
+                .description(dto.description())
+                .eventDate(dto.eventDate())
+                .location(dto.location())
+                .totalTickets(dto.totalTickets())
+                .availableTickets(dto.totalTickets())
+                .basePrice(dto.basePrice())
                 .build();
 
         Event savedEvent = eventRepository.save(event);
 
-        return toResponseDto(savedEvent);
+        return EventResponseDto.from(savedEvent);
     }
 
     @Transactional
@@ -63,28 +65,7 @@ public class EventService {
         Event updatedEvent = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
         
-        return toResponseDto(updatedEvent);
-    }
-
-    // ========== HELPERS ==========
-
-    private List<EventResponseDto> toListResponseDto(List<Event> events) {
-        return events.stream()
-        .map(this::toResponseDto)
-        .toList();
-    }
-
-    private EventResponseDto toResponseDto(Event event) {
-        return EventResponseDto.builder()
-            .id(event.getId())
-            .name(event.getName())
-            .description(event.getDescription())
-            .eventDate(event.getEventDate())
-            .location(event.getLocation())
-            .totalTickets(event.getTotalTickets())
-            .availableTickets(event.getAvailableTickets())
-            .basePrice(event.getBasePrice())
-            .build();
+        return EventResponseDto.from(updatedEvent);
     }
 
 }

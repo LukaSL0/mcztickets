@@ -30,7 +30,7 @@ Este sistema consiste em 4 microserviços independentes que se comunicam via API
 ### API Gateway (Porta 8080)
 **Ponto de entrada único para todos os serviços**
 
-O API Gateway atua como proxy reverso, roteando requisições para os microserviços apropriados. Adiciona o header `X-Gateway-Request: TicketBlitz-Gateway` em todas as requisições:
+O API Gateway atua como proxy reverso, roteando requisições para os microserviços apropriados. Adiciona o header `X-Gateway-Request: MCZTickets-Gateway` em todas as requisições:
 
 - `http://localhost:8080/auth/**` → Auth Service (8081)
 - `http://localhost:8080/events/**` → Events Service (8082)

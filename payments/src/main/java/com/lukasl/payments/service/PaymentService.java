@@ -26,36 +26,38 @@ public class PaymentService {
     private final OrderClient orderClient;
 
     public List<PaymentResponseDto> getAllPayments() {
-        List<Payment> payments = paymentRepository.findAll();
-        return toListResponseDto(payments);
+        return paymentRepository.findAll().stream()
+                .map(PaymentResponseDto::from)
+                .toList();
+
     }
 
     public PaymentResponseDto getPayment(Long id) {
         Payment payment = paymentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment not found"));
-        return toResponseDto(payment);
+        return PaymentResponseDto.from(payment);
     }
 
     @Transactional
     public PaymentResponseDto createPayment(CreatePaymentDto dto) {
-        if (paymentRepository.existsByOrderId(dto.getOrderId())) {
-            throw new ConflictException("Payment already exists for order: " + dto.getOrderId());
+        if (paymentRepository.existsByOrderId(dto.orderId())) {
+            throw new ConflictException("Payment already exists for order: " + dto.orderId());
         }
 
-        OrderDto order = orderClient.getOrderById(dto.getOrderId());
+        OrderDto order = orderClient.getOrderById(dto.orderId());
         validatePaymentCanBeCreated(order);
 
         Payment payment = Payment.builder()
-            .orderId(dto.getOrderId())
-            .userId(dto.getUserId())
-            .amount(order.getAmount())
-            .paymentMethod(dto.getPaymentMethod())
+            .orderId(dto.orderId())
+            .userId(dto.userId())
+            .amount(order.amount())
+            .paymentMethod(dto.paymentMethod())
             .transactionId("TX-" + System.currentTimeMillis())
             .build();
 
         Payment savedPayment = paymentRepository.save(payment);
 
-        return toResponseDto(savedPayment);
+        return PaymentResponseDto.from(savedPayment);
     }
 
     @Transactional
@@ -76,16 +78,14 @@ public class PaymentService {
         
         updateOrderBasedOnPaymentStatus(savedPayment);
         
-        return toResponseDto(savedPayment);
+        return PaymentResponseDto.from(savedPayment);
     }
 
-    // ========== HELPERS ==========
-
     public void validatePaymentCanBeCreated(OrderDto order) {
-        if (order.getStatus().equals("CANCELLED")) {
+        if (order.status().equals("CANCELLED")) {
             throw new ConflictException("Order already cancelled");
         }
-        if (order.getStatus().equals("COMPLETED")) {
+        if (order.status().equals("COMPLETED")) {
             throw new ConflictException("Order already completed");
         }
     }
@@ -115,25 +115,5 @@ public class PaymentService {
             .build();
         
         orderClient.updateOrderStatus(orderId, dto);
-    }
-    
-    private List<PaymentResponseDto> toListResponseDto(List<Payment> payments) {
-        return payments.stream()
-        .map(this::toResponseDto)
-        .toList();
-    }
-
-    private PaymentResponseDto toResponseDto(Payment payment) {
-        return PaymentResponseDto.builder()
-            .id(payment.getId())
-            .orderId(payment.getOrderId())
-            .userId(payment.getUserId())
-            .amount(payment.getAmount())
-            .paymentMethod(payment.getPaymentMethod())
-            .status(payment.getStatus())
-            .transactionId(payment.getTransactionId())
-            .failureReason(payment.getFailureReason())
-            .createdAt(payment.getCreatedAt())
-            .build();
     }
 }

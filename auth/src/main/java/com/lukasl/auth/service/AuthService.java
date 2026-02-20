@@ -1,9 +1,9 @@
 package com.lukasl.auth.service;
 
-import java.util.UUID;
-
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,6 +19,7 @@ import com.lukasl.auth.entity.RefreshToken;
 import com.lukasl.auth.entity.User;
 import com.lukasl.auth.exception.ConflictException;
 import com.lukasl.auth.exception.ResourceNotFoundException;
+import com.lukasl.auth.exception.UnauthorizedException;
 import com.lukasl.auth.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -34,63 +35,41 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
 
-    // ========== AUTHENTICATION ==========
-
     @Transactional
     public AuthResponseDto login(LoginDto dto) {
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getPassword())
-        );
+                new UsernamePasswordAuthenticationToken(dto.email(), dto.password()));
 
-        User user = userRepository.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + dto.getEmail()));
+        User user = userRepository.findByEmail(dto.email())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + dto.email()));
 
-        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
-        String accessToken = jwtService.generateToken(userDetails);
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
-
-        return AuthResponseDto.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken.getToken())
-                .expiresIn(jwtService.getExpirationInSeconds())
-                .user(toUserResponseDto(user))
-                .build();
+        return buildAuthResponse(user);
     }
 
     @Transactional
     public AuthResponseDto register(CreateUserDto dto) {
-        if (userRepository.existsByUsername(dto.getUsername())) {
+        if (userRepository.existsByUsername(dto.username())) {
             throw new ConflictException("Username already exists");
         }
-        if (userRepository.existsByEmail(dto.getEmail())) {
+        if (userRepository.existsByEmail(dto.email())) {
             throw new ConflictException("Email already exists");
         }
 
-        String hashedPassword = passwordEncoder.encode(dto.getPassword());
+        String hashedPassword = passwordEncoder.encode(dto.password());
         User user = User.builder()
-                .name(dto.getName())
-                .username(dto.getUsername())
-                .email(dto.getEmail())
+                .name(dto.name())
+                .username(dto.username())
+                .email(dto.email())
                 .password(hashedPassword)
                 .build();
 
         User savedUser = userRepository.save(user);
-
-        UserDetails userDetails = userDetailsService.loadUserByUsername(savedUser.getUsername());
-        String accessToken = jwtService.generateToken(userDetails);
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(savedUser);
-
-        return AuthResponseDto.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken.getToken())
-                .expiresIn(jwtService.getExpirationInSeconds())
-                .user(toUserResponseDto(savedUser))
-                .build();
+        return buildAuthResponse(savedUser);
     }
 
     @Transactional
     public AuthResponseDto refreshToken(RefreshTokenDto dto) {
-        RefreshToken refreshToken = refreshTokenService.findByToken(dto.getRefreshToken());
+        RefreshToken refreshToken = refreshTokenService.findByToken(dto.refreshToken());
         refreshTokenService.verifyExpiration(refreshToken);
 
         User user = refreshToken.getUser();
@@ -101,24 +80,36 @@ public class AuthService {
                 .accessToken(newAccessToken)
                 .refreshToken(refreshToken.getToken())
                 .expiresIn(jwtService.getExpirationInSeconds())
-                .user(toUserResponseDto(user))
+                .user(UserResponseDto.from(user))
                 .build();
     }
 
     @Transactional
-    public void logout(UUID userId) {
-        refreshTokenService.revokeUserTokens(userId);
+    public void logout() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getName())) {
+            throw new UnauthorizedException("User is not authenticated");
+        }
+
+        String username = auth.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UnauthorizedException("User not found"));
+
+        refreshTokenService.revokeUserTokens(user.getId());
+        SecurityContextHolder.clearContext();
     }
 
-    // ========== HELPERS ==========
+    private AuthResponseDto buildAuthResponse(User user) {
+        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
+        String accessToken = jwtService.generateToken(userDetails);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
-    private UserResponseDto toUserResponseDto(User user) {
-        return UserResponseDto.builder()
-                .id(user.getId())
-                .name(user.getName())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .role(user.getRole())
+        return AuthResponseDto.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken.getToken())
+                .expiresIn(jwtService.getExpirationInSeconds())
+                .user(UserResponseDto.from(user))
                 .build();
     }
 }
