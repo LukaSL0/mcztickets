@@ -1,0 +1,137 @@
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: mcztickets-db
+    environment:
+      POSTGRES_USER: mcztickets
+      POSTGRES_PASSWORD: mcztickets123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mcztickets"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mcztickets-network
+
+  auth:
+    build:
+      context: ./auth
+      dockerfile: Dockerfile
+    container_name: mcztickets-auth
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/auth_db
+      SPRING_DATASOURCE_USERNAME: mcztickets
+      SPRING_DATASOURCE_PASSWORD: mcztickets123
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_CACHE_TYPE: caffeine
+      SPRING_CACHE_CAFFEINE_SPEC: maximumSize=500,expireAfterWrite=15m
+      JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      JWT_EXPIRATION: 3600000
+      JWT_REFRESH_EXPIRATION: 604800000
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - mcztickets-network
+    restart: on-failure
+
+  events:
+    build:
+      context: ./events
+      dockerfile: Dockerfile
+    container_name: mcztickets-events
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/events_db
+      SPRING_DATASOURCE_USERNAME: mcztickets
+      SPRING_DATASOURCE_PASSWORD: mcztickets123
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - mcztickets-network
+    restart: on-failure
+
+  orders:
+    build:
+      context: ./orders
+      dockerfile: Dockerfile
+    container_name: mcztickets-orders
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/orders_db
+      SPRING_DATASOURCE_USERNAME: mcztickets
+      SPRING_DATASOURCE_PASSWORD: mcztickets123
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      AUTH_SERVICE_URL: http://auth:8081
+      EVENTS_SERVICE_URL: http://events:8082
+    ports:
+      - "8083:8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      events:
+        condition: service_started
+    networks:
+      - mcztickets-network
+    restart: on-failure
+
+  payments:
+    build:
+      context: ./payments
+      dockerfile: Dockerfile
+    container_name: mcztickets-payments
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/payments_db
+      SPRING_DATASOURCE_USERNAME: mcztickets
+      SPRING_DATASOURCE_PASSWORD: mcztickets123
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      AUTH_SERVICE_URL: http://auth:8081
+      ORDERS_SERVICE_URL: http://orders:8083
+    ports:
+      - "8084:8084"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      orders:
+        condition: service_started
+    networks:
+      - mcztickets-network
+    restart: on-failure
+
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: mcztickets-gateway
+    environment:
+      AUTH_SERVICE_URL: http://auth:8081
+      EVENTS_SERVICE_URL: http://events:8082
+      ORDERS_SERVICE_URL: http://orders:8083
+      PAYMENTS_SERVICE_URL: http://payments:8084
+    ports:
+      - "8080:8080"
+    depends_on:
+      - auth
+      - events
+      - orders
+      - payments
+    networks:
+      - mcztickets-network
+    restart: on-failure
+
+volumes:
+  postgres_data:
+
+networks:
+  mcztickets-network:
+    driver: bridge
