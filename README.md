@@ -4,7 +4,7 @@ Uma plataforma distribuída de venda de ingressos para eventos, construída com 
 
 ## 🏗️ Arquitetura
 
-Este sistema consiste em 4 microserviços independentes que se comunicam via APIs REST usando OpenFeign, acessados através de um API Gateway:
+Este sistema consiste em 4 microserviços independentes que se comunicam via **Apache Kafka**, acessados através de um API Gateway:
 
 ```
                                            ┌─────────────────┐
@@ -17,14 +17,22 @@ Este sistema consiste em 4 microserviços independentes que se comunicam via API
                     ▼                               ▼                              ▼
              ┌─────────────┐                 ┌─────────────┐                ┌─────────────┐
              │    Auth     │                 │   Events    │                │   Orders    │
-             │   :8081     │                 │   :8082     │ ◀───────────▶ │   :8083     │
-             └─────────────┘                 └─────────────┘                └──────┬──────┘
-                                                                                   │
-                                                                                   ▼
-                                                                            ┌─────────────┐
-                                                                            │  Payments   │
-                                                                            │   :8084     │
-                                                                            └─────────────┘
+             │   :8081     │                 │   :8082     │                │   :8083     │
+             └─────────────┘                 └──────┬──────┘                └──────┬──────┘
+                                                    │                              │
+                                          ┌─────────┴──────────────────────────────┘
+                                          │                   │
+                                          ▼                   ▼
+                                     ┌─────────────────────────────┐
+                                     │         Apache Kafka        │
+                                     │            :9092            │
+                                     └──────────────┬──────────────┘
+                                                    │
+                                                    ▼
+                                             ┌─────────────┐
+                                             │  Payments   │
+                                             │   :8084     │
+                                             └─────────────┘
 ```
 
 ### API Gateway (Porta 8080)
@@ -126,7 +134,7 @@ AND available_tickets >= :tickets
 
 #### Funcionalidades:
 - Criação de pedidos com cálculo automático de preço
-- Integração com Events Service para validação e reserva
+- Integração com Events Service via **Kafka** para busca de evento e reserva de ingressos
 - Fluxo de status: `PENDING` → `COMPLETED` / `CANCELLED`
 - Reserva de ingressos automaticamente quando status muda para `COMPLETED`
 
@@ -159,7 +167,7 @@ AND available_tickets >= :tickets
 - Geração de ID de transação único (`TX-{timestamp}`)
 - Fluxo de status: `PENDING` → `PROCESSING` → `COMPLETED` / `FAILED`
 - Gateway de pagamento simulado (80% de taxa de sucesso)
-- Atualização automática do status do pedido baseado no resultado
+- Atualização automática do status do pedido via **Kafka** (fire-and-forget)
 - Validação de conflitos (pagamento duplicado, pedido já finalizado)
 
 #### Fluxo de Pagamento:
@@ -174,48 +182,51 @@ AND available_tickets >= :tickets
 
 | Categoria | Tecnologia |
 |-----------|------------|
-| **Framework** | Spring Boot 3.x |
-| **Linguagem** | Java 17+ |
+| **Framework** | Spring Boot 4.x |
+| **Linguagem** | Java 21+ |
 | **Banco de Dados** | PostgreSQL |
 | **ORM** | Spring Data JPA / Hibernate |
 | **Segurança** | Spring Security + JWT (jjwt) |
 | **Criptografia** | BCrypt |
 | **API Gateway** | Spring Cloud Gateway MVC |
-| **Comunicação** | OpenFeign (REST) |
+| **Mensageria** | Apache Kafka |
 | **Validação** | Jakarta Validation |
-| **Ferramenta de Build** | Maven / Gradle |
+| **Ferramenta de Build** | Maven |
+| **Containers** | Docker + Docker Compose |
 
 ---
 
 ## 🚀 Como Executar
 
 ### Pré-requisitos
-- Java 17 ou superior
-- PostgreSQL 14+
-- Maven 3.8+
+- Docker e Docker Compose
+- Java 21 ou superior (para desenvolvimento local)
+- Maven 4.0+
 
-### Variáveis de Ambiente (Auth Service)
-```properties
-jwt.secret=<base64-encoded-secret>
-jwt.expiration=3600000
-jwt.refresh-expiration=604800000
+### Com Docker Compose (recomendado)
+```bash
+docker-compose up -d
 ```
 
-### Ordem de Inicialização
-1. **PostgreSQL** - Garanta que o banco está rodando
-2. **Auth Service** (:8081)
-3. **Events Service** (:8082)
-4. **Orders Service** (:8083)
-5. **Payments Service** (:8084)
-6. **API Gateway** (:8080)
+Isso sobe automaticamente na ordem correta:
+1. **Kafka** (:9092) — Broker de Mensagens (Modo KRaft)
+2. **PostgreSQL** (:5432) — Banco de Dados
+3. **Auth Service** (:8081)
+4. **Events Service** (:8082)
+5. **Orders Service** (:8083)
+6. **Payments Service** (:8084)
+7. **API Gateway** (:8080)
 
-### Executando cada serviço
+### Executando localmente (desenvolvimento)
+
+Garanta que o Kafka esteja rodando em `localhost:9092` e então:
+
 ```bash
-cd auth && mvn spring-boot:run
-cd events && mvn spring-boot:run
-cd orders && mvn spring-boot:run
-cd payments && mvn spring-boot:run
-cd gateway && mvn spring-boot:run
+cd auth && ./mvnw spring-boot:run
+cd events && ./mvnw spring-boot:run
+cd orders && ./mvnw spring-boot:run
+cd payments && ./mvnw spring-boot:run
+cd gateway && ./mvnw spring-boot:run
 ```
 
 ---
